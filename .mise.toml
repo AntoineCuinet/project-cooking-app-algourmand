@@ -1,0 +1,4 @@
+[tools]
+tuist = { version = '4.215.0', os = ["macos"] }
+swiftformat = { version = '0.58.7', os = ["macos", "linux"] }
+swiftlint = { version = '0.63.0', os = ["macos", "linux"] }
