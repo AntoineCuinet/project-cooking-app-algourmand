@@ -8,9 +8,12 @@ public enum Constants {
         "SWIFT_ACTIVE_COMPILATION_CONDITIONS": "DEBUG"
     ]
 
+    public static let devTeam = Environment.devTeam.getString(default: "5KP8875QV4")
+
     public static let baseSettings = SettingsDictionary()
         .currentProjectVersion("1")
         .marketingVersion("1.0.0")
+        .automaticCodeSigning(devTeam: devTeam)
 
     public static let deploymentTarget = DeploymentTargets.iOS("17.0")
     public static let destinations: Destinations = [.iPhone, .iPad]
