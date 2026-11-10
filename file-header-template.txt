@@ -1,0 +1,4 @@
+/*
+ Algourmand - iOS App
+ Copyright (C) 2026 Algourmand
+ */
