@@ -1,6 +1,6 @@
-# Algourmand - Cooking application
+# Algourmand - Application de recettes
 
-Algourmand est une application IOS native en SwiftUI pour la gestion de recettes de cuisine et de repas s'interfaçant avec une API REST Laravel.
+Algourmand est une application iOS native en SwiftUI pour la gestion de recettes de cuisine et de repas s'interfaçant avec une API REST Laravel.
 
 ---
 
