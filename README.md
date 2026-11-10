@@ -2,7 +2,7 @@
 
 Algourmand est une application iOS native en **SwiftUI** dédiée à la gestion de recettes de cuisine et de repas, s'interfaçant avec une API REST **Laravel** ([dépôt backend](https://github.com/gaspardquentin/algourmand)).
 
----
+![Logo](screenshot.png)
 
 ## Architecture
 
@@ -23,7 +23,7 @@ Le projet est entièrement modulaire et piloté par **Tuist** pour éviter les c
 L'application intègre les contrats d'API pour les 4 endpoints d'authentification :
 
 | Méthode | Endpoint | Description | Headers |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `POST` | `/api/v1/register` | Inscription d'un nouvel utilisateur (201 ou 422) | `Content-Type: application/json` |
 | `POST` | `/api/v1/login` | Connexion utilisateur (200 ou 401) | `Content-Type: application/json` |
 | `POST` | `/api/v1/logout` | Révocation de session (204 ou 401) | `Authorization: Bearer <token>` |
