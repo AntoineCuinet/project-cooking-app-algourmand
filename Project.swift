@@ -11,7 +11,7 @@ let project = Project(
         developmentRegion: "fr"
     ),
     targets: [
-        // Algourmand (Main App)
+        // MARK: - Algourmand (Main App)
         .target(
             name: Constants.appName,
             destinations: Constants.destinations,
@@ -25,6 +25,9 @@ let project = Project(
                     .string("UIInterfaceOrientationPortrait"),
                     .string("UIInterfaceOrientationLandscapeLeft"),
                     .string("UIInterfaceOrientationLandscapeRight")
+                ]),
+                "NSAppTransportSecurity": .dictionary([
+                    "NSAllowsLocalNetworking": .boolean(true)
                 ])
             ]),
             sources: ["\(Constants.appName)/**"],
@@ -40,7 +43,7 @@ let project = Project(
             settings: .settings(base: Constants.baseSettings)
         ),
 
-        // AlgourmandCore (Business Logic, Models, API)
+        // MARK: - AlgourmandCore (Business Logic, Models, API)
         .target(
             name: "\(Constants.appName)Core",
             destinations: Constants.destinations,
@@ -53,7 +56,7 @@ let project = Project(
             settings: .settings(base: Constants.baseSettings)
         ),
 
-        // AlgourmandCoreUI (Design System, Reusable UI Components)
+        // MARK: - AlgourmandCoreUI (Design System, Reusable UI Components)
         .target(
             name: "\(Constants.appName)CoreUI",
             destinations: Constants.destinations,
@@ -68,7 +71,7 @@ let project = Project(
             settings: .settings(base: Constants.baseSettings)
         ),
 
-        // AlgourmandTests (Unit Tests)
+        // MARK: - AlgourmandTests (Unit Tests)
         .target(
             name: "\(Constants.appName)Tests",
             destinations: Constants.destinations,
