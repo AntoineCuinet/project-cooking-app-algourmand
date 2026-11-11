@@ -327,4 +327,51 @@ final class AlgourmandTests: XCTestCase {
         XCTAssertEqual(profile.allergies, ["peanuts"])
         XCTAssertEqual(profile.dislikedIngredients, ["Coriandre"])
     }
+
+    func testLocalProfileAndUserStorage() {
+        let userId = UUID()
+        let profile = UserProfile(
+            id: userId,
+            age: 30,
+            weight: 75.0,
+            height: 180.0,
+            activityLevel: .active,
+            goal: .muscleGain,
+            allergies: ["gluten"],
+            dietaryPreferences: ["omnivore"],
+            dislikedIngredients: ["Foie"]
+        )
+
+        let profileStorage = LocalProfileStorage.shared
+        XCTAssertTrue(profileStorage.saveProfile(profile, for: userId))
+
+        let loadedProfile = profileStorage.loadProfile(for: userId)
+        XCTAssertNotNil(loadedProfile)
+        XCTAssertEqual(loadedProfile?.age, 30)
+        XCTAssertEqual(loadedProfile?.goal, .muscleGain)
+
+        XCTAssertTrue(profileStorage.deleteProfile(for: userId))
+        XCTAssertNil(profileStorage.loadProfile(for: userId))
+
+        // User Storage
+        let user = UserDTO(id: userId, username: "antoine", email: "antoine@example.com")
+        let userStorage = LocalUserStorage.shared
+        XCTAssertTrue(userStorage.saveCurrentUser(user))
+
+        let loadedUser = userStorage.loadCurrentUser()
+        XCTAssertEqual(loadedUser?.username, "antoine")
+        XCTAssertEqual(loadedUser?.email, "antoine@example.com")
+
+        XCTAssertTrue(userStorage.clearCurrentUser())
+        XCTAssertNil(userStorage.loadCurrentUser())
+    }
+
+    func testKeychainHelperTokenStorage() {
+        let token = "test_bearer_token_12345"
+        XCTAssertTrue(KeychainHelper.saveToken(token))
+        XCTAssertEqual(KeychainHelper.readToken(), token)
+
+        XCTAssertTrue(KeychainHelper.deleteToken())
+        XCTAssertNil(KeychainHelper.readToken())
+    }
 }
