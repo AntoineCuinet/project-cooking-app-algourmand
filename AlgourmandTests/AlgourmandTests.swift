@@ -410,4 +410,54 @@ final class AlgourmandTests: XCTestCase {
         XCTAssertTrue(LocalWeeklyPreferencesStorage.shared.deletePreferences(for: userId))
         XCTAssertNil(LocalWeeklyPreferencesStorage.shared.loadPreferences(for: userId))
     }
+
+    @MainActor
+    func testColdAppRestartSessionAndPreferencesRestoration() async {
+        let authVM = AuthViewModel()
+        await authVM.login(email: "quentin@algourmand.ch", password: "password123")
+        XCTAssertTrue(authVM.isAuthenticated)
+        guard let user = authVM.currentUser else {
+            XCTFail("Utilisateur manquant")
+            return
+        }
+
+        let profile = UserProfile(
+            id: user.id,
+            age: 29,
+            weight: 71.0,
+            height: 177.0,
+            activityLevel: .moderate,
+            goal: .maintenance,
+            allergies: ["lactose"],
+            dietaryPreferences: ["vegetarian"],
+            dislikedIngredients: ["Coriandre"]
+        )
+        authVM.saveCompletedProfile(profile)
+
+        let weeklyVM = WeeklyPreferencesViewModel()
+        weeklyVM.maxPreparationTime = 25
+        weeklyVM.toggleCuisine("Italienne")
+        XCTAssertTrue(weeklyVM.savePreferences(for: user.id))
+
+        let restartedAuthVM = AuthViewModel()
+
+        XCTAssertTrue(restartedAuthVM.isAuthenticated)
+        XCTAssertEqual(restartedAuthVM.currentUser?.id, user.id)
+        XCTAssertEqual(restartedAuthVM.currentUser?.email, "quentin@algourmand.ch")
+        XCTAssertTrue(restartedAuthVM.hasCompletedProfile)
+
+        let reloadedProfile = LocalProfileStorage.shared.loadProfile(for: user.id)
+        XCTAssertNotNil(reloadedProfile)
+        XCTAssertEqual(reloadedProfile?.age, 29)
+        XCTAssertEqual(reloadedProfile?.allergies, ["lactose"])
+
+        let reloadedWeekly = LocalWeeklyPreferencesStorage.shared.loadPreferences(for: user.id)
+        XCTAssertNotNil(reloadedWeekly)
+        XCTAssertEqual(reloadedWeekly?.maxPreparationTime, 25)
+        XCTAssertTrue(reloadedWeekly?.preferences.contains("Italienne") ?? false)
+
+        await restartedAuthVM.logout()
+        XCTAssertFalse(restartedAuthVM.isAuthenticated)
+        XCTAssertNil(KeychainHelper.readToken())
+    }
 }
