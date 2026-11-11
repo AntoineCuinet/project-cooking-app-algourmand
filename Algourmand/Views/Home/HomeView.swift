@@ -8,6 +8,7 @@ struct HomeView: View {
     @State private var searchText = ""
     @State private var selectedCategory = "Tous"
     @State private var showingLogoutConfirmation = false
+    @State private var showingWeeklyPreferences = false
 
     private let categories = ["Tous", "Plat", "Dessert", "Entrée"]
 
@@ -68,6 +69,8 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     welcomeHeader
 
+                    weeklyPreferencesBanner
+
                     searchBar
 
                     categoryFilter
@@ -96,7 +99,54 @@ struct HomeView: View {
                 }
                 Button("Annuler", role: .cancel) {}
             }
+            .sheet(isPresented: $showingWeeklyPreferences) {
+                if let user = viewModel.currentUser {
+                    WeeklyPreferencesView(userId: user.id)
+                }
+            }
         }
+    }
+
+    // MARK: - Weekly Preferences Banner
+    private var weeklyPreferencesBanner: some View {
+        Button {
+            showingWeeklyPreferences = true
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(Color.algourmandPrimary)
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Préférences de la semaine")
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.algourmandText)
+
+                    Text("Temps de préparation, styles culinaires et budget")
+                        .font(.caption2)
+                        .foregroundStyle(Color.algourmandText.opacity(0.7))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.footnote)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.algourmandText.opacity(0.4))
+            }
+            .padding(14)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: Color.algourmandPrimary.opacity(0.08), radius: 10, x: 0, y: 3)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Welcome Header
