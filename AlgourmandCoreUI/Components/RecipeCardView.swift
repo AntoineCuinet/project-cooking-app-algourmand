@@ -14,33 +14,33 @@ public struct RecipeCardView: View {
                 Text(recipe.category.uppercased())
                     .font(.caption)
                     .fontWeight(.bold)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.algourmandSecondary)
 
                 Spacer()
 
                 if recipe.preparationTime > 0 {
                     Label("\(recipe.preparationTime) min", systemImage: "clock")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.algourmandText.opacity(0.7))
                 }
 
                 if recipe.calories > 0 {
                     Label("\(Int(recipe.calories)) kcal", systemImage: "flame.fill")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.algourmandPrimary)
                 }
             }
 
             Text(recipe.name)
                 .font(.headline)
-                .foregroundStyle(.primary)
+                .foregroundStyle(Color.algourmandText)
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.algourmandPrimary.opacity(0.12), lineWidth: 1)
         )
     }
 }

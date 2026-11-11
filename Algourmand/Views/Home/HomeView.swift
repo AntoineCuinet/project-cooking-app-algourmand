@@ -1,7 +1,6 @@
 import AlgourmandCore
 import AlgourmandCoreUI
 import SwiftUI
-import UIKit
 
 struct HomeView: View {
     @ObservedObject var viewModel: AuthViewModel
@@ -78,7 +77,7 @@ struct HomeView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
             }
-            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+            .background(Color.algourmandBackground.ignoresSafeArea())
             .navigationTitle("Accueil")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -102,22 +101,32 @@ struct HomeView: View {
 
     // MARK: - Welcome Header
     private var welcomeHeader: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if let user = viewModel.currentUser {
-                Text("Bonjour, \(user.username) !")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.primary)
-            } else {
-                Text("Bienvenue sur Algourmand !")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.primary)
+        HStack(spacing: 14) {
+            Image.algourmandLogo
+                .resizable()
+                .scaledToFit()
+                .frame(width: 48, height: 48)
+                .shadow(color: Color.algourmandPrimary.opacity(0.15), radius: 6, x: 0, y: 3)
+
+            VStack(alignment: .leading, spacing: 4) {
+                if let user = viewModel.currentUser {
+                    Text("Bonjour, \(user.username) !")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.algourmandText)
+                } else {
+                    Text("Bienvenue sur Algourmand !")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.algourmandText)
+                }
+
+                Text("Prêt à cuisiner de bonnes recettes aujourd'hui ?")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.algourmandText.opacity(0.7))
             }
 
-            Text("Prêt à cuisiner de bonnes recettes aujourd'hui ?")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            Spacer()
         }
         .padding(.top, 4)
     }
@@ -126,9 +135,10 @@ struct HomeView: View {
     private var searchBar: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.algourmandPrimary)
 
             TextField("Rechercher une recette...", text: $searchText)
+                .foregroundStyle(Color.algourmandText)
                 .autocorrectionDisabled()
 
             if !searchText.isEmpty {
@@ -136,7 +146,7 @@ struct HomeView: View {
                     searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.algourmandText.opacity(0.5))
                 }
             }
         }
@@ -165,8 +175,8 @@ struct HomeView: View {
             Text(category)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color.orange : Color(uiColor: .secondarySystemGroupedBackground))
-                .foregroundStyle(isSelected ? Color.white : Color(uiColor: .label))
+                .background(isSelected ? Color.algourmandPrimary : Color(uiColor: .secondarySystemGroupedBackground))
+                .foregroundStyle(isSelected ? Color.white : Color.algourmandText)
                 .clipShape(Capsule())
         }
         .font(.subheadline)
@@ -178,23 +188,23 @@ struct HomeView: View {
             HStack {
                 Text("Recettes du moment")
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color.algourmandText)
 
                 Spacer()
 
                 Text("\(filteredRecipes.count) recette(s)")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.algourmandText.opacity(0.6))
             }
 
             if filteredRecipes.isEmpty {
                 VStack(spacing: 10) {
                     Image(systemName: "fork.knife")
                         .font(.largeTitle)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.algourmandText.opacity(0.4))
                     Text("Aucune recette trouvée")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.algourmandText.opacity(0.6))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 40)
@@ -225,12 +235,12 @@ struct HomeView: View {
         } label: {
             ZStack {
                 Circle()
-                    .fill(Color.orange.opacity(0.15))
+                    .fill(Color.algourmandPrimary.opacity(0.15))
                     .frame(width: 36, height: 36)
 
                 Image(systemName: "person.fill")
                     .font(.system(size: 16))
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.algourmandPrimary)
             }
         }
     }

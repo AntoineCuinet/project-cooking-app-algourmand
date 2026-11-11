@@ -1,4 +1,5 @@
 import AlgourmandCore
+import AlgourmandCoreUI
 import SwiftUI
 import UIKit
 
@@ -37,32 +38,28 @@ struct AuthView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
             }
-            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+            .background(Color.algourmandBackground.ignoresSafeArea())
         }
     }
 
     // MARK: - Header
     private var headerSection: some View {
-        VStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(Color.orange.opacity(0.15))
-                    .frame(width: 96, height: 96)
+        VStack(spacing: 16) {
+            Image.algourmandLogo
+                .resizable()
+                .scaledToFit()
+                .frame(width: 96, height: 96)
+                .shadow(color: Color.algourmandPrimary.opacity(0.2), radius: 10, x: 0, y: 4)
 
-                Image(systemName: "fork.knife.circle.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(.orange)
-            }
-
-            VStack(spacing: 4) {
+            VStack(spacing: 6) {
                 Text("Algourmand")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color.algourmandText)
 
-                Text("Vos recettes et repas au quotidien")
+                Text("Ton alimentation, organisée intelligemment")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.algourmandText.opacity(0.7))
             }
         }
         .padding(.top, 20)
@@ -94,7 +91,7 @@ struct AuthView: View {
         .padding(20)
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+        .shadow(color: Color.algourmandPrimary.opacity(0.08), radius: 12, x: 0, y: 4)
     }
 
     // MARK: - Login Form
@@ -104,7 +101,7 @@ struct AuthView: View {
                 Text("Adresse email")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.algourmandText.opacity(0.75))
 
                 TextField("nom@exemple.com", text: $loginEmail)
                     .textFieldStyle(.roundedBorder)
@@ -117,7 +114,7 @@ struct AuthView: View {
                 Text("Mot de passe")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.algourmandText.opacity(0.75))
 
                 SecureField("Mot de passe", text: $loginPassword)
                     .textFieldStyle(.roundedBorder)
@@ -130,7 +127,7 @@ struct AuthView: View {
             } label: {
                 Text("Utiliser le compte de test")
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.algourmandPrimary)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
 
@@ -152,7 +149,7 @@ struct AuthView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .tint(.orange)
+            .tint(Color.algourmandPrimary)
             .controlSize(.large)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .disabled(viewModel.isLoading || loginEmail.isEmpty || loginPassword.isEmpty)
@@ -166,7 +163,7 @@ struct AuthView: View {
                 Text("Nom d'utilisateur")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.algourmandText.opacity(0.75))
 
                 TextField("ex: chef_quentin", text: $registerUsername)
                     .textFieldStyle(.roundedBorder)
@@ -177,7 +174,7 @@ struct AuthView: View {
                 Text("Adresse email")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.algourmandText.opacity(0.75))
 
                 TextField("nom@exemple.com", text: $registerEmail)
                     .textFieldStyle(.roundedBorder)
@@ -190,7 +187,7 @@ struct AuthView: View {
                 Text("Mot de passe")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.algourmandText.opacity(0.75))
 
                 SecureField("Mot de passe", text: $registerPassword)
                     .textFieldStyle(.roundedBorder)
@@ -200,7 +197,7 @@ struct AuthView: View {
                 Text("Confirmer le mot de passe")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.algourmandText.opacity(0.75))
 
                 SecureField("Confirmation", text: $registerPasswordConfirmation)
                     .textFieldStyle(.roundedBorder)
@@ -229,7 +226,7 @@ struct AuthView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .tint(.orange)
+            .tint(Color.algourmandPrimary)
             .controlSize(.large)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .disabled(
