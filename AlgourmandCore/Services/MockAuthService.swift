@@ -2,6 +2,7 @@ import Foundation
 
 public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
     public static let shared = MockAuthService()
+    public static let defaultUserId = UUID(uuidString: "77777777-7777-7777-7777-777777777777")!
 
     private let lock = NSLock()
     private var users: [String: (user: UserDTO, password: String)] = [:]
@@ -24,8 +25,7 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
     }
 
     public init() {
-        // Utilisateur de démonstration pré-configuré
-        let defaultUser = UserDTO(id: UUID(), username: "chef_quentin", email: "quentin@algourmand.ch")
+        let defaultUser = UserDTO(id: Self.defaultUserId, username: "chef_quentin", email: "quentin@algourmand.ch")
         users[defaultUser.email.lowercased()] = (user: defaultUser, password: "password123")
     }
 
@@ -38,6 +38,11 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
     public func setToken(_ token: String?) {
         lock.withLock {
             sessionToken = token
+            if token != nil && currentSessionUser == nil {
+                currentSessionUser = LocalUserStorage.shared.loadCurrentUser() ?? users.values.first?.user
+            } else if token == nil {
+                currentSessionUser = nil
+            }
         }
     }
 
@@ -100,11 +105,7 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
             try await Task.sleep(nanoseconds: simulatedDelayNanoseconds)
         }
 
-        return try lock.withLock {
-            guard sessionToken != nil else {
-                throw APIErrorResponse(message: "Unauthenticated.")
-            }
-
+        lock.withLock {
             self.sessionToken = nil
             self.currentSessionUser = nil
         }
@@ -116,11 +117,21 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
         }
 
         return try lock.withLock {
-            guard sessionToken != nil, let user = currentSessionUser else {
-                throw APIErrorResponse(message: "Unauthenticated.")
+            if let user = currentSessionUser {
+                return user
             }
 
-            return user
+            if sessionToken != nil, let savedUser = LocalUserStorage.shared.loadCurrentUser() {
+                self.currentSessionUser = savedUser
+                return savedUser
+            }
+
+            if sessionToken != nil, let first = users.values.first?.user {
+                self.currentSessionUser = first
+                return first
+            }
+
+            throw APIErrorResponse(message: "Unauthenticated.")
         }
     }
 
@@ -130,7 +141,7 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
             sessionToken = nil
             currentSessionUser = nil
 
-            let defaultUser = UserDTO(id: UUID(), username: "chef_quentin", email: "quentin@algourmand.ch")
+            let defaultUser = UserDTO(id: Self.defaultUserId, username: "chef_quentin", email: "quentin@algourmand.ch")
             users[defaultUser.email.lowercased()] = (user: defaultUser, password: "password123")
         }
     }

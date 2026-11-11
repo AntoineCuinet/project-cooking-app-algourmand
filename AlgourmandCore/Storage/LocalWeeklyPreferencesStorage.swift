@@ -10,6 +10,10 @@ public final class LocalWeeklyPreferencesStorage: @unchecked Sendable {
         self.fileManager = fileManager
     }
 
+    private func userDefaultsKey(for userId: UUID) -> String {
+        "algourmand_persisted_weekly_prefs_\(userId.uuidString)"
+    }
+
     private func preferencesFileURL(for userId: UUID) -> URL {
         let baseDirectory: URL
         if let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
@@ -27,14 +31,13 @@ public final class LocalWeeklyPreferencesStorage: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
 
-        do {
-            let data = try JSONEncoder().encode(preferences)
-            let url = preferencesFileURL(for: userId)
-            try data.write(to: url, options: .atomic)
-            return true
-        } catch {
-            return false
-        }
+        guard let data = try? JSONEncoder().encode(preferences) else { return false }
+
+        UserDefaults.standard.set(data, forKey: userDefaultsKey(for: userId))
+
+        let url = preferencesFileURL(for: userId)
+        try? data.write(to: url, options: .atomic)
+        return true
     }
 
     public func loadPreferences(for userId: UUID) -> WeeklyPreferences? {
@@ -42,14 +45,25 @@ public final class LocalWeeklyPreferencesStorage: @unchecked Sendable {
         defer { lock.unlock() }
 
         let url = preferencesFileURL(for: userId)
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return try? JSONDecoder().decode(WeeklyPreferences.self, from: data)
+        if let data = try? Data(contentsOf: url),
+           let prefs = try? JSONDecoder().decode(WeeklyPreferences.self, from: data) {
+            return prefs
+        }
+
+        if let data = UserDefaults.standard.data(forKey: userDefaultsKey(for: userId)),
+           let prefs = try? JSONDecoder().decode(WeeklyPreferences.self, from: data) {
+            return prefs
+        }
+
+        return nil
     }
 
     @discardableResult
     public func deletePreferences(for userId: UUID) -> Bool {
         lock.lock()
         defer { lock.unlock() }
+
+        UserDefaults.standard.removeObject(forKey: userDefaultsKey(for: userId))
 
         let url = preferencesFileURL(for: userId)
         guard fileManager.fileExists(atPath: url.path) else { return true }

@@ -10,6 +10,8 @@ public final class LocalUserStorage: @unchecked Sendable {
         self.fileManager = fileManager
     }
 
+    private let userDefaultsKey = "algourmand_persisted_current_user"
+
     private var currentUserURL: URL {
         let baseDirectory: URL
         if let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
@@ -27,27 +29,37 @@ public final class LocalUserStorage: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
 
-        do {
-            let data = try JSONEncoder().encode(user)
-            try data.write(to: currentUserURL, options: .atomic)
-            return true
-        } catch {
-            return false
-        }
+        guard let data = try? JSONEncoder().encode(user) else { return false }
+
+        UserDefaults.standard.set(data, forKey: userDefaultsKey)
+
+        try? data.write(to: currentUserURL, options: .atomic)
+        return true
     }
 
     public func loadCurrentUser() -> UserDTO? {
         lock.lock()
         defer { lock.unlock() }
 
-        guard let data = try? Data(contentsOf: currentUserURL) else { return nil }
-        return try? JSONDecoder().decode(UserDTO.self, from: data)
+        if let data = try? Data(contentsOf: currentUserURL),
+           let user = try? JSONDecoder().decode(UserDTO.self, from: data) {
+            return user
+        }
+
+        if let data = UserDefaults.standard.data(forKey: userDefaultsKey),
+           let user = try? JSONDecoder().decode(UserDTO.self, from: data) {
+            return user
+        }
+
+        return nil
     }
 
     @discardableResult
     public func clearCurrentUser() -> Bool {
         lock.lock()
         defer { lock.unlock() }
+
+        UserDefaults.standard.removeObject(forKey: userDefaultsKey)
 
         guard fileManager.fileExists(atPath: currentUserURL.path) else { return true }
         do {

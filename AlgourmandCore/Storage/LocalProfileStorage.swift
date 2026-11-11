@@ -10,6 +10,10 @@ public final class LocalProfileStorage: @unchecked Sendable {
         self.fileManager = fileManager
     }
 
+    private func userDefaultsKey(for userId: UUID) -> String {
+        "algourmand_persisted_profile_\(userId.uuidString)"
+    }
+
     private func profileFileURL(for userId: UUID) -> URL {
         let baseDirectory: URL
         if let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
@@ -27,14 +31,13 @@ public final class LocalProfileStorage: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
 
-        do {
-            let data = try JSONEncoder().encode(profile)
-            let url = profileFileURL(for: userId)
-            try data.write(to: url, options: .atomic)
-            return true
-        } catch {
-            return false
-        }
+        guard let data = try? JSONEncoder().encode(profile) else { return false }
+
+        UserDefaults.standard.set(data, forKey: userDefaultsKey(for: userId))
+
+        let url = profileFileURL(for: userId)
+        try? data.write(to: url, options: .atomic)
+        return true
     }
 
     public func loadProfile(for userId: UUID) -> UserProfile? {
@@ -42,14 +45,25 @@ public final class LocalProfileStorage: @unchecked Sendable {
         defer { lock.unlock() }
 
         let url = profileFileURL(for: userId)
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return try? JSONDecoder().decode(UserProfile.self, from: data)
+        if let data = try? Data(contentsOf: url),
+           let profile = try? JSONDecoder().decode(UserProfile.self, from: data) {
+            return profile
+        }
+
+        if let data = UserDefaults.standard.data(forKey: userDefaultsKey(for: userId)),
+           let profile = try? JSONDecoder().decode(UserProfile.self, from: data) {
+            return profile
+        }
+
+        return nil
     }
 
     @discardableResult
     public func deleteProfile(for userId: UUID) -> Bool {
         lock.lock()
         defer { lock.unlock() }
+
+        UserDefaults.standard.removeObject(forKey: userDefaultsKey(for: userId))
 
         let url = profileFileURL(for: userId)
         guard fileManager.fileExists(atPath: url.path) else { return true }
