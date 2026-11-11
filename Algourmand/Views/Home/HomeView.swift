@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var selectedCategory = "Tous"
     @State private var showingLogoutConfirmation = false
     @State private var showingWeeklyPreferences = false
+    @State private var savedWeeklyPreferences: WeeklyPreferences?
 
     private let categories = ["Tous", "Plat", "Dessert", "Entrée"]
 
@@ -101,36 +102,73 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showingWeeklyPreferences) {
                 if let user = viewModel.currentUser {
-                    WeeklyPreferencesView(userId: user.id)
+                    WeeklyPreferencesView(userId: user.id) {
+                        refreshWeeklyPreferences()
+                    }
                 }
+            }
+            .onAppear {
+                refreshWeeklyPreferences()
+            }
+            .onChange(of: viewModel.currentUser?.id) {
+                refreshWeeklyPreferences()
             }
         }
     }
 
+    private func refreshWeeklyPreferences() {
+        if let user = viewModel.currentUser {
+            savedWeeklyPreferences = LocalWeeklyPreferencesStorage.shared.loadPreferences(for: user.id)
+        } else {
+            savedWeeklyPreferences = nil
+        }
+    }
+
     // MARK: - Weekly Preferences Banner
+    @ViewBuilder
     private var weeklyPreferencesBanner: some View {
+        if let preferences = savedWeeklyPreferences {
+            configuredPreferencesCard(preferences)
+        } else {
+            pendingPreferencesReminderCard
+        }
+    }
+
+    // MARK: - Reminder Card
+    private var pendingPreferencesReminderCard: some View {
         Button {
             showingWeeklyPreferences = true
         } label: {
             HStack(spacing: 14) {
                 ZStack {
                     Circle()
-                        .fill(Color.algourmandPrimary)
+                        .fill(Color.orange.opacity(0.14))
                         .frame(width: 44, height: 44)
 
-                    Image(systemName: "slider.horizontal.3")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
+                    Image(systemName: "calendar.badge.exclamationmark")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.orange)
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Préférences de la semaine")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color.algourmandText)
+                    HStack(spacing: 6) {
+                        Text("Préférences de la semaine")
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(Color.algourmandText)
 
-                    Text("Temps de préparation, styles culinaires et budget")
-                        .font(.caption2)
+                        Text("À configurer")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.orange.opacity(0.15))
+                            .foregroundStyle(.orange)
+                            .clipShape(Capsule())
+                    }
+
+                    Text("Renseignez vos critères pour générer vos repas de la semaine.")
+                        .font(.caption)
                         .foregroundStyle(Color.algourmandText.opacity(0.7))
                 }
 
@@ -144,9 +182,116 @@ struct HomeView: View {
             .padding(14)
             .background(Color(uiColor: .secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 16))
-            .shadow(color: Color.algourmandPrimary.opacity(0.08), radius: 10, x: 0, y: 3)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.orange.opacity(0.25), lineWidth: 1)
+            )
+            .shadow(color: Color.orange.opacity(0.06), radius: 8, x: 0, y: 3)
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Configured Summary Card
+    private func configuredPreferencesCard(_ preferences: WeeklyPreferences) -> some View {
+        Button {
+            showingWeeklyPreferences = true
+        } label: {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.algourmandSuccess.opacity(0.15))
+                            .frame(width: 40, height: 40)
+
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(Color.algourmandSuccess)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Text("Menu de la semaine configuré")
+                                .font(.subheadline)
+                                .fontWeight(.bold)
+                                .foregroundStyle(Color.algourmandText)
+
+                            Text("Actif")
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.algourmandSuccess.opacity(0.15))
+                                .foregroundStyle(Color.algourmandSuccess)
+                                .clipShape(Capsule())
+                        }
+
+                        Text("Vos critères guident les suggestions de repas.")
+                            .font(.caption2)
+                            .foregroundStyle(Color.algourmandText.opacity(0.7))
+                    }
+
+                    Spacer()
+
+                    HStack(spacing: 4) {
+                        Text("Modifier")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                    }
+                    .foregroundStyle(Color.algourmandPrimary)
+                }
+
+                HStack(spacing: 8) {
+                    summaryChip(
+                        icon: "clock.fill",
+                        text: preferences.maxPreparationTime.map { "\($0) min" } ?? "Sans limite"
+                    )
+
+                    summaryChip(
+                        icon: "person.2.fill",
+                        text: "\(preferences.numberOfPeople) pers."
+                    )
+
+                    summaryChip(
+                        icon: "creditcard.fill",
+                        text: "\(Int(preferences.budget)) €"
+                    )
+                }
+
+                if !preferences.preferences.isEmpty {
+                    Text(preferences.preferences.joined(separator: " • "))
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color.algourmandPrimary)
+                        .lineLimit(1)
+                }
+            }
+            .padding(14)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.algourmandPrimary.opacity(0.18), lineWidth: 1)
+            )
+            .shadow(color: Color.algourmandPrimary.opacity(0.06), radius: 8, x: 0, y: 3)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func summaryChip(icon: String, text: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption2)
+            Text(text)
+                .font(.caption2)
+                .fontWeight(.medium)
+        }
+        .foregroundStyle(Color.algourmandText.opacity(0.85))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color.algourmandBackground)
+        .clipShape(Capsule())
     }
 
     // MARK: - Welcome Header
