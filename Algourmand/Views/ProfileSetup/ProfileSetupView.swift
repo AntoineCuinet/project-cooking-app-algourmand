@@ -4,7 +4,7 @@ import SwiftUI
 
 struct ProfileSetupView: View {
     @StateObject private var viewModel = ProfileSetupViewModel()
-    let onCompleted: () -> Void
+    let onCompleted: (UserProfile) -> Void
 
     var body: some View {
         NavigationStack {
@@ -159,7 +159,9 @@ struct ProfileSetupView: View {
                 Button {
                     withAnimation(.easeInOut(duration: 0.25)) {
                         if viewModel.isLastStep {
-                            onCompleted()
+                            viewModel.completeSetup()
+                            let profile = viewModel.buildUserProfile()
+                            onCompleted(profile)
                         } else {
                             viewModel.nextStep()
                         }
@@ -184,5 +186,5 @@ struct ProfileSetupView: View {
 }
 
 #Preview {
-    ProfileSetupView {}
+    ProfileSetupView { _ in }
 }

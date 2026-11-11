@@ -10,9 +10,9 @@ struct ContentView: View {
                 AuthView(viewModel: authViewModel)
                     .transition(.opacity)
             } else if !authViewModel.hasCompletedProfile {
-                ProfileSetupView {
+                ProfileSetupView { profile in
                     withAnimation(.easeInOut(duration: 0.3)) {
-                        authViewModel.markProfileCompleted()
+                        authViewModel.saveCompletedProfile(profile)
                     }
                 }
                 .transition(.asymmetric(
