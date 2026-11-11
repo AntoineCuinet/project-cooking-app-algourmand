@@ -143,67 +143,19 @@ struct PhysicalInfoStepView: View {
 
             VStack(spacing: 10) {
                 ForEach(UserProfile.ActivityLevel.allCases, id: \.self) { level in
-                    activityLevelCard(for: level)
+                    SelectionCard(
+                        title: level.displayName,
+                        description: level.subtitle,
+                        systemImage: level.systemIcon,
+                        isSelected: viewModel.activityLevel == level
+                    ) {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            viewModel.activityLevel = level
+                        }
+                    }
                 }
             }
         }
-    }
-
-    private func activityLevelCard(for level: UserProfile.ActivityLevel) -> some View {
-        let isSelected = viewModel.activityLevel == level
-
-        return Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                viewModel.activityLevel = level
-            }
-        } label: {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .fill(isSelected ? Color.algourmandPrimary : Color.algourmandPrimary.opacity(0.12))
-                        .frame(width: 42, height: 42)
-
-                    Image(systemName: level.systemIcon)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(isSelected ? Color.white : Color.algourmandPrimary)
-                }
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(level.displayName)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color.algourmandText)
-
-                    Text(level.subtitle)
-                        .font(.caption2)
-                        .foregroundStyle(Color.algourmandText.opacity(0.7))
-                        .lineLimit(2)
-                }
-
-                Spacer()
-
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(
-                        isSelected ? Color.algourmandPrimary : Color.algourmandText.opacity(0.3)
-                    )
-            }
-            .padding(14)
-            .background(
-                isSelected ?
-                Color.algourmandPrimary.opacity(0.08) :
-                Color(uiColor: .tertiarySystemGroupedBackground)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(
-                        isSelected ? Color.algourmandPrimary : Color.clear,
-                        lineWidth: 1.5
-                    )
-            )
-        }
-        .buttonStyle(.plain)
     }
 }
 
