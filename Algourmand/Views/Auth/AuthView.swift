@@ -77,7 +77,7 @@ struct AuthView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .onChange(of: selectedTab) { _ in
+            .onChange(of: selectedTab) {
                 viewModel.clearMessages()
             }
 
