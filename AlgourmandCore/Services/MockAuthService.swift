@@ -39,32 +39,32 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
         if simulatedDelayNanoseconds > 0 {
             try await Task.sleep(nanoseconds: simulatedDelayNanoseconds)
         }
-        
+
         return try lock.withLock {
             let normalizedEmail = request.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            
+
             if users[normalizedEmail] != nil {
                 throw APIErrorResponse(
                     message: "The email has already been taken.",
                     errors: ["email": ["The email has already been taken."]]
                 )
             }
-            
+
             if request.password != request.passwordConfirmation {
                 throw APIErrorResponse(
                     message: "The password confirmation does not match.",
                     errors: ["password": ["The password confirmation does not match."]]
                 )
             }
-            
+
             let newId = (users.values.map(\.user.id).max() ?? 0) + 1
             let newUser = UserDTO(id: newId, username: request.username, email: normalizedEmail)
             users[normalizedEmail] = (user: newUser, password: request.password)
-            
+
             let token = "mock-bearer-token-\(UUID().uuidString)"
             self.sessionToken = token
             self.currentSessionUser = newUser
-            
+
             return AuthResponse(token: token, tokenType: "Bearer", user: newUser)
         }
     }
@@ -76,15 +76,15 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
 
         return try lock.withLock {
             let normalizedEmail = request.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            
+
             guard let entry = users[normalizedEmail], entry.password == request.password else {
                 throw APIErrorResponse(message: "Invalid credentials.")
             }
-            
+
             let token = "mock-bearer-token-\(UUID().uuidString)"
             self.sessionToken = token
             self.currentSessionUser = entry.user
-            
+
             return AuthResponse(token: token, tokenType: "Bearer", user: entry.user)
         }
     }
@@ -98,7 +98,7 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
             guard sessionToken != nil else {
                 throw APIErrorResponse(message: "Unauthenticated.")
             }
-            
+
             self.sessionToken = nil
             self.currentSessionUser = nil
         }
@@ -113,7 +113,7 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
             guard sessionToken != nil, let user = currentSessionUser else {
                 throw APIErrorResponse(message: "Unauthenticated.")
             }
-            
+
             return user
         }
     }
@@ -123,7 +123,7 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
             users.removeAll()
             sessionToken = nil
             currentSessionUser = nil
-            
+
             let defaultUser = UserDTO(id: 1, username: "chef_quentin", email: "quentin@algourmand.ch")
             users[defaultUser.email.lowercased()] = (user: defaultUser, password: "password123")
         }
