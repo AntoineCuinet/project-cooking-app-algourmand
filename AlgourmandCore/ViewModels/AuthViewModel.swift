@@ -14,9 +14,13 @@ public final class AuthViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published public var currentUser: UserDTO?
     @Published public var isAuthenticated: Bool = false
+    @Published public var hasCompletedProfile: Bool = true
     @Published public var isLoading: Bool = false
     @Published public var errorMessage: String?
     @Published public var successMessage: String?
+
+    // MARK: - Profile State Storage
+    private let profileCompletedKeyPrefix = "algourmand_has_completed_profile_"
 
     // MARK: - Configuration
     public let activeMode: ServiceMode
@@ -46,6 +50,8 @@ public final class AuthViewModel: ObservableObject {
             let response = try await activeService.login(request: LoginRequest(email: email, password: password))
             self.currentUser = response.user
             self.isAuthenticated = true
+            let hasCompleted = isProfileCompleted(for: response.user.id) || response.user.email == "quentin@algourmand.ch"
+            self.hasCompletedProfile = hasCompleted
             self.successMessage = "Connexion réussie !"
         } catch {
             self.errorMessage = error.localizedDescription
@@ -70,6 +76,8 @@ public final class AuthViewModel: ObservableObject {
             let response = try await activeService.register(request: request)
             self.currentUser = response.user
             self.isAuthenticated = true
+            UserDefaults.standard.set(false, forKey: "\(profileCompletedKeyPrefix)\(response.user.id.uuidString)")
+            self.hasCompletedProfile = false
             self.successMessage = "Compte créé et connecté !"
         } catch {
             self.errorMessage = error.localizedDescription
@@ -87,12 +95,25 @@ public final class AuthViewModel: ObservableObject {
             try await activeService.logout()
             self.currentUser = nil
             self.isAuthenticated = false
+            self.hasCompletedProfile = true
             self.successMessage = nil
         } catch {
             self.errorMessage = error.localizedDescription
         }
 
         isLoading = false
+    }
+
+    // MARK: - Profile Completion State
+    public func isProfileCompleted(for userId: UUID) -> Bool {
+        UserDefaults.standard.bool(forKey: "\(profileCompletedKeyPrefix)\(userId.uuidString)")
+    }
+
+    public func markProfileCompleted() {
+        if let user = currentUser {
+            UserDefaults.standard.set(true, forKey: "\(profileCompletedKeyPrefix)\(user.id.uuidString)")
+        }
+        self.hasCompletedProfile = true
     }
 
     public func clearMessages() {
