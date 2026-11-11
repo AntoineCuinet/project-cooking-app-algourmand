@@ -18,12 +18,20 @@ public struct RecipeCardView: View {
 
                 Spacer()
 
-                Label("\(recipe.prepTimeMinutes) min", systemImage: "clock")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if recipe.preparationTime > 0 {
+                    Label("\(recipe.preparationTime) min", systemImage: "clock")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                if recipe.calories > 0 {
+                    Label("\(Int(recipe.calories)) kcal", systemImage: "flame.fill")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
-            Text(recipe.title)
+            Text(recipe.name)
                 .font(.headline)
                 .foregroundStyle(.primary)
         }

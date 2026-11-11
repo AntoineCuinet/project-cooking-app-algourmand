@@ -2,11 +2,11 @@ import Foundation
 
 // MARK: - User Model
 public struct UserDTO: Codable, Identifiable, Hashable, Sendable {
-    public let id: Int
+    public let id: UUID
     public let username: String
     public let email: String
 
-    public init(id: Int, username: String, email: String) {
+    public init(id: UUID, username: String, email: String) {
         self.id = id
         self.username = username
         self.email = email

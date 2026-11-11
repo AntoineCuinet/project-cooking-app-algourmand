@@ -13,16 +13,52 @@ struct HomeView: View {
     private let categories = ["Tous", "Plat", "Dessert", "Entrée"]
 
     private let sampleRecipes: [Recipe] = [
-        Recipe(id: 1, title: "Tarte Tatin aux Pommes Caramélisées", category: "Dessert", prepTimeMinutes: 45),
-        Recipe(id: 2, title: "Gratin Dauphinois Traditionnel", category: "Plat", prepTimeMinutes: 60),
-        Recipe(id: 3, title: "Velouté de Potimarron & Châtaignes", category: "Entrée", prepTimeMinutes: 25),
-        Recipe(id: 4, title: "Risotto Crémeux aux Champignons", category: "Plat", prepTimeMinutes: 35)
+        Recipe(
+            id: UUID(),
+            name: "Tarte Tatin aux Pommes Caramélisées",
+            category: "Dessert",
+            preparationTime: 45,
+            calories: 380,
+            proteins: 4.5,
+            carbohydrates: 52.0,
+            fats: 16.0
+        ),
+        Recipe(
+            id: UUID(),
+            name: "Gratin Dauphinois Traditionnel",
+            category: "Plat",
+            preparationTime: 60,
+            calories: 520,
+            proteins: 12.0,
+            carbohydrates: 45.0,
+            fats: 28.0
+        ),
+        Recipe(
+            id: UUID(),
+            name: "Velouté de Potimarron & Châtaignes",
+            category: "Entrée",
+            preparationTime: 25,
+            calories: 220,
+            proteins: 5.0,
+            carbohydrates: 28.0,
+            fats: 8.0
+        ),
+        Recipe(
+            id: UUID(),
+            name: "Risotto Crémeux aux Champignons",
+            category: "Plat",
+            preparationTime: 35,
+            calories: 460,
+            proteins: 11.0,
+            carbohydrates: 62.0,
+            fats: 14.0
+        )
     ]
 
     private var filteredRecipes: [Recipe] {
         sampleRecipes.filter { recipe in
             let matchesCategory = (selectedCategory == "Tous" || recipe.category == selectedCategory)
-            let matchesSearch = searchText.isEmpty || recipe.title.localizedCaseInsensitiveContains(searchText)
+            let matchesSearch = searchText.isEmpty || recipe.name.localizedCaseInsensitiveContains(searchText)
             return matchesCategory && matchesSearch
         }
     }

@@ -25,7 +25,7 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
 
     public init() {
         // Utilisateur de démonstration pré-configuré
-        let defaultUser = UserDTO(id: 1, username: "chef_quentin", email: "quentin@algourmand.ch")
+        let defaultUser = UserDTO(id: UUID(), username: "chef_quentin", email: "quentin@algourmand.ch")
         users[defaultUser.email.lowercased()] = (user: defaultUser, password: "password123")
     }
 
@@ -57,7 +57,7 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
                 )
             }
 
-            let newId = (users.values.map(\.user.id).max() ?? 0) + 1
+            let newId = UUID()
             let newUser = UserDTO(id: newId, username: request.username, email: normalizedEmail)
             users[normalizedEmail] = (user: newUser, password: request.password)
 
@@ -124,7 +124,7 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
             sessionToken = nil
             currentSessionUser = nil
 
-            let defaultUser = UserDTO(id: 1, username: "chef_quentin", email: "quentin@algourmand.ch")
+            let defaultUser = UserDTO(id: UUID(), username: "chef_quentin", email: "quentin@algourmand.ch")
             users[defaultUser.email.lowercased()] = (user: defaultUser, password: "password123")
         }
     }
