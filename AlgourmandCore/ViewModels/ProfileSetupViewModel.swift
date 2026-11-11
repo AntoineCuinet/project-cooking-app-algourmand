@@ -71,9 +71,124 @@ public final class ProfileSetupViewModel: ObservableObject {
     @Published public var selectedDietaryPreferences: Set<String> = []
     @Published public var selectedAllergies: Set<String> = []
     @Published public var dislikedIngredients: [String] = []
+    @Published public var dislikedIngredientInput: String = ""
+
+    // MARK: - Predefined Catalogues
+    public struct OptionItem: Identifiable, Hashable, Sendable {
+        public let id: String
+        public let title: String
+        public let subtitle: String?
+        public let systemIcon: String
+
+        public init(id: String, title: String, subtitle: String? = nil, systemIcon: String) {
+            self.id = id
+            self.title = title
+            self.subtitle = subtitle
+            self.systemIcon = systemIcon
+        }
+    }
+
+    public let availableDietaryPreferences: [OptionItem] = [
+        OptionItem(
+            id: "omnivore",
+            title: "Omnivore",
+            subtitle: "Aucune restriction, tout me convient",
+            systemIcon: "fork.knife"
+        ),
+        OptionItem(
+            id: "vegetarian",
+            title: "Végétarien",
+            subtitle: "Sans viande ni poisson",
+            systemIcon: "leaf.fill"
+        ),
+        OptionItem(
+            id: "vegan",
+            title: "Végétalien / Végan",
+            subtitle: "100% végétal, aucun produit animal",
+            systemIcon: "carrot.fill"
+        ),
+        OptionItem(
+            id: "pescatarian",
+            title: "Pescétarien",
+            subtitle: "Végétarien avec poissons et fruits de mer",
+            systemIcon: "fish.fill"
+        ),
+        OptionItem(
+            id: "flexitarian",
+            title: "Flexitarien",
+            subtitle: "Principalement végétal, viande occasionnelle",
+            systemIcon: "arrow.3.trianglepath"
+        ),
+        OptionItem(
+            id: "keto",
+            title: "Cétogène (Keto)",
+            subtitle: "Riche en bons lipides, très pauvre en glucides",
+            systemIcon: "flame"
+        )
+    ]
+
+    public let availableAllergies: [OptionItem] = [
+        OptionItem(id: "gluten", title: "Gluten / Blé", systemIcon: "cross.case.fill"),
+        OptionItem(id: "lactose", title: "Lactose / Produits laitiers", systemIcon: "cup.and.saucer.fill"),
+        OptionItem(id: "peanuts", title: "Arachides", systemIcon: "allergens"),
+        OptionItem(id: "tree_nuts", title: "Fruits à coque", systemIcon: "leaf"),
+        OptionItem(id: "eggs", title: "Œufs", systemIcon: "oval.fill"),
+        OptionItem(id: "fish", title: "Poissons", systemIcon: "fish.fill"),
+        OptionItem(id: "crustaceans", title: "Crustacés & Mollusques", systemIcon: "water.waves"),
+        OptionItem(id: "soy", title: "Soja", systemIcon: "drop.fill"),
+        OptionItem(id: "sesame", title: "Sésame", systemIcon: "circle.grid.2x2.fill"),
+        OptionItem(id: "mustard", title: "Moutarde", systemIcon: "takeoutbag.and.cup.and.straw.fill"),
+        OptionItem(id: "celery", title: "Céleri", systemIcon: "camera.macro")
+    ]
+
+    public let popularDislikedSuggestions: [String] = [
+        "Coriandre", "Céleri", "Choux de Bruxelles", "Champignons",
+        "Aubergines", "Foie", "Poivrons", "Olives", "Brocolis", "Huîtres"
+    ]
+
+    // MARK: - Form Actions
+    public func toggleDietaryPreference(_ id: String) {
+        if selectedDietaryPreferences.contains(id) {
+            selectedDietaryPreferences.remove(id)
+        } else {
+            selectedDietaryPreferences.insert(id)
+        }
+    }
+
+    public func isDietaryPreferenceSelected(_ id: String) -> Bool {
+        selectedDietaryPreferences.contains(id)
+    }
+
+    public func toggleAllergy(_ id: String) {
+        if selectedAllergies.contains(id) {
+            selectedAllergies.remove(id)
+        } else {
+            selectedAllergies.insert(id)
+        }
+    }
+
+    public func isAllergySelected(_ id: String) -> Bool {
+        selectedAllergies.contains(id)
+    }
+
+    public func clearAllergies() {
+        selectedAllergies.removeAll()
+    }
+
+    public func addDislikedIngredient(_ name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if !dislikedIngredients.contains(where: { $0.caseInsensitiveCompare(trimmed) == .orderedSame }) {
+            dislikedIngredients.append(trimmed)
+        }
+        dislikedIngredientInput = ""
+    }
+
+    public func removeDislikedIngredient(_ name: String) {
+        dislikedIngredients.removeAll { $0.caseInsensitiveCompare(name) == .orderedSame }
+    }
 
     // MARK: - Validation & Parsed Values
-    // PhysicalInfo
     public var ageValue: Int? {
         let cleaned = ageText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let value = Int(cleaned) else { return nil }
@@ -183,5 +298,19 @@ public final class ProfileSetupViewModel: ObservableObject {
 
     public func completeSetup() {
         isCompleted = true
+    }
+
+    public func buildUserProfile(id: UUID = UUID()) -> UserProfile {
+        UserProfile(
+            id: id,
+            age: ageValue ?? 25,
+            weight: weightValue,
+            height: heightValue,
+            activityLevel: activityLevel,
+            goal: nutritionGoal,
+            allergies: Array(selectedAllergies),
+            dietaryPreferences: Array(selectedDietaryPreferences),
+            dislikedIngredients: dislikedIngredients
+        )
     }
 }
