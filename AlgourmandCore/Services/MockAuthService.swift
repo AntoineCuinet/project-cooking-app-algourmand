@@ -35,6 +35,12 @@ public final class MockAuthService: AuthServiceProtocol, @unchecked Sendable {
         }
     }
 
+    public func setToken(_ token: String?) {
+        lock.withLock {
+            sessionToken = token
+        }
+    }
+
     public func register(request: RegisterRequest) async throws -> AuthResponse {
         if simulatedDelayNanoseconds > 0 {
             try await Task.sleep(nanoseconds: simulatedDelayNanoseconds)
