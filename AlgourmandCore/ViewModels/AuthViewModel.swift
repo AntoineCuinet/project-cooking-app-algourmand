@@ -194,10 +194,14 @@ public final class AuthViewModel: ObservableObject {
         do {
             let user = try await activeService.fetchCurrentUser()
             self.currentUser = user
+            localUserStorage.saveCurrentUser(user)
         } catch {
-            self.errorMessage = error.localizedDescription
-            self.isAuthenticated = false
-            self.currentUser = nil
+            if let apiError = error as? APIErrorResponse, apiError.message == "Unauthenticated." {
+                self.isAuthenticated = false
+                self.currentUser = nil
+                KeychainHelper.deleteToken()
+                localUserStorage.clearCurrentUser()
+            }
         }
 
         isLoading = false

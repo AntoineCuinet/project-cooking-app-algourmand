@@ -374,4 +374,90 @@ final class AlgourmandTests: XCTestCase {
         XCTAssertTrue(KeychainHelper.deleteToken())
         XCTAssertNil(KeychainHelper.readToken())
     }
+
+    @MainActor
+    func testWeeklyPreferencesViewModelAndStorage() {
+        let userId = UUID()
+        let viewModel = WeeklyPreferencesViewModel()
+
+        XCTAssertEqual(viewModel.maxPreparationTime, 30)
+        XCTAssertFalse(viewModel.hasNoTimeLimit)
+        viewModel.maxPreparationTime = 45
+        XCTAssertEqual(viewModel.maxPreparationTime, 45)
+
+        XCTAssertTrue(viewModel.isCuisineSelected("Méditerranéenne"))
+        viewModel.toggleCuisine("Italienne")
+        XCTAssertTrue(viewModel.isCuisineSelected("Italienne"))
+        viewModel.toggleCuisine("Italienne")
+        XCTAssertFalse(viewModel.isCuisineSelected("Italienne"))
+
+        viewModel.addIngredient("Courgettes")
+        viewModel.addIngredient("Riz")
+        viewModel.addIngredient("courgettes")
+        XCTAssertEqual(viewModel.availableIngredients.count, 2)
+        viewModel.removeIngredient("Riz")
+        XCTAssertEqual(viewModel.availableIngredients, ["Courgettes"])
+
+        XCTAssertTrue(viewModel.savePreferences(for: userId))
+        XCTAssertTrue(viewModel.isSaved)
+        XCTAssertNotNil(viewModel.feedbackMessage)
+
+        let loaded = LocalWeeklyPreferencesStorage.shared.loadPreferences(for: userId)
+        XCTAssertNotNil(loaded)
+        XCTAssertEqual(loaded?.maxPreparationTime, 45)
+        XCTAssertEqual(loaded?.availableIngredients, ["Courgettes"])
+
+        XCTAssertTrue(LocalWeeklyPreferencesStorage.shared.deletePreferences(for: userId))
+        XCTAssertNil(LocalWeeklyPreferencesStorage.shared.loadPreferences(for: userId))
+    }
+
+    @MainActor
+    func testColdAppRestartSessionAndPreferencesRestoration() async {
+        let authVM = AuthViewModel()
+        await authVM.login(email: "quentin@algourmand.ch", password: "password123")
+        XCTAssertTrue(authVM.isAuthenticated)
+        guard let user = authVM.currentUser else {
+            XCTFail("Utilisateur manquant")
+            return
+        }
+
+        let profile = UserProfile(
+            id: user.id,
+            age: 29,
+            weight: 71.0,
+            height: 177.0,
+            activityLevel: .moderate,
+            goal: .maintenance,
+            allergies: ["lactose"],
+            dietaryPreferences: ["vegetarian"],
+            dislikedIngredients: ["Coriandre"]
+        )
+        authVM.saveCompletedProfile(profile)
+
+        let weeklyVM = WeeklyPreferencesViewModel()
+        weeklyVM.maxPreparationTime = 25
+        weeklyVM.toggleCuisine("Italienne")
+        XCTAssertTrue(weeklyVM.savePreferences(for: user.id))
+
+        let restartedAuthVM = AuthViewModel()
+
+        XCTAssertTrue(restartedAuthVM.isAuthenticated)
+        XCTAssertEqual(restartedAuthVM.currentUser?.id, user.id)
+        XCTAssertEqual(restartedAuthVM.currentUser?.email, "quentin@algourmand.ch")
+        XCTAssertTrue(restartedAuthVM.hasCompletedProfile)
+
+        let reloadedProfile = LocalProfileStorage.shared.loadProfile(for: user.id)
+        XCTAssertNotNil(reloadedProfile)
+        XCTAssertEqual(reloadedProfile?.age, 29)
+        XCTAssertEqual(reloadedProfile?.allergies, ["lactose"])
+
+        let reloadedWeekly = LocalWeeklyPreferencesStorage.shared.loadPreferences(for: user.id)
+        XCTAssertNotNil(reloadedWeekly)
+        XCTAssertEqual(reloadedWeekly?.maxPreparationTime, 25)
+        XCTAssertTrue(reloadedWeekly?.preferences.contains("Italienne") ?? false)
+
+        await restartedAuthVM.logout()
+        XCTAssertFalse(restartedAuthVM.isAuthenticated)
+        XCTAssertNil(KeychainHelper.readToken())
+    }
 }
