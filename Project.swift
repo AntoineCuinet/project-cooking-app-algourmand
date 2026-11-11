@@ -10,6 +10,10 @@ let project = Project(
         ),
         developmentRegion: "fr"
     ),
+    settings: .settings(
+        base: Constants.baseSettings,
+        defaultSettings: .recommended
+    ),
     targets: [
         // MARK: - Algourmand (Main App)
         .target(

@@ -10,10 +10,14 @@ public enum Constants {
 
     public static let devTeam = Environment.devTeam.getString(default: "5KP8875QV4")
 
-    public static let baseSettings = SettingsDictionary()
-        .currentProjectVersion("1")
-        .marketingVersion("1.0.0")
-        .automaticCodeSigning(devTeam: devTeam)
+    public static let baseSettings: SettingsDictionary = [
+        "CURRENT_PROJECT_VERSION": "1",
+        "MARKETING_VERSION": "1.0.0",
+        "DEVELOPMENT_TEAM": .string(devTeam),
+        "CODE_SIGN_STYLE": "Automatic",
+        "ENABLE_USER_SCRIPT_SANDBOXING": "NO",
+        "ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS": "NO"
+    ]
 
     public static let deploymentTarget = DeploymentTargets.iOS("17.0")
     public static let destinations: Destinations = [.iPhone, .iPad]
