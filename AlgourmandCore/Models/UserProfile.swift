@@ -51,6 +51,39 @@ public struct UserProfile: Identifiable, Codable, Hashable, Sendable {
         case weightLoss = "weight_loss"
         case maintenance = "maintenance"
         case muscleGain = "muscle_gain"
+
+        public var displayName: String {
+            switch self {
+            case .weightLoss:
+                return "Perte de poids"
+            case .maintenance:
+                return "Maintien & Équilibre"
+            case .muscleGain:
+                return "Prise de masse"
+            }
+        }
+
+        public var subtitle: String {
+            switch self {
+            case .weightLoss:
+                return "Recettes légères et rassasiantes pour un déficit modéré sans frustration"
+            case .maintenance:
+                return "Repas complets et équilibrés pour stabiliser votre énergie au quotidien"
+            case .muscleGain:
+                return "Apports protéiques renforcés et surplus sain pour le développement musculaire"
+            }
+        }
+
+        public var systemIcon: String {
+            switch self {
+            case .weightLoss:
+                return "flame.fill"
+            case .maintenance:
+                return "leaf.fill"
+            case .muscleGain:
+                return "dumbbell.fill"
+            }
+        }
     }
 
     public let id: UUID
