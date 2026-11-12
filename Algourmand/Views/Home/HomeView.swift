@@ -4,77 +4,21 @@ import SwiftUI
 
 struct HomeView: View {
     @ObservedObject var viewModel: AuthViewModel
+    @StateObject private var catalogViewModel = RecipeCatalogViewModel()
 
-    @State private var searchText = ""
-    @State private var selectedCategory = "Tous"
     @State private var showingLogoutConfirmation = false
     @State private var showingWeeklyPreferences = false
     @State private var savedWeeklyPreferences: WeeklyPreferences?
-
-    private let categories = ["Tous", "Plat", "Dessert", "Entrée"]
-
-    private let sampleRecipes: [Recipe] = [
-        Recipe(
-            id: UUID(),
-            name: "Tarte Tatin aux Pommes Caramélisées",
-            category: "Dessert",
-            preparationTime: 45,
-            calories: 380,
-            proteins: 4.5,
-            carbohydrates: 52.0,
-            fats: 16.0
-        ),
-        Recipe(
-            id: UUID(),
-            name: "Gratin Dauphinois Traditionnel",
-            category: "Plat",
-            preparationTime: 60,
-            calories: 520,
-            proteins: 12.0,
-            carbohydrates: 45.0,
-            fats: 28.0
-        ),
-        Recipe(
-            id: UUID(),
-            name: "Velouté de Potimarron & Châtaignes",
-            category: "Entrée",
-            preparationTime: 25,
-            calories: 220,
-            proteins: 5.0,
-            carbohydrates: 28.0,
-            fats: 8.0
-        ),
-        Recipe(
-            id: UUID(),
-            name: "Risotto Crémeux aux Champignons",
-            category: "Plat",
-            preparationTime: 35,
-            calories: 460,
-            proteins: 11.0,
-            carbohydrates: 62.0,
-            fats: 14.0
-        )
-    ]
-
-    private var filteredRecipes: [Recipe] {
-        sampleRecipes.filter { recipe in
-            let matchesCategory = (selectedCategory == "Tous" || recipe.category == selectedCategory)
-            let matchesSearch = searchText.isEmpty || recipe.name.localizedCaseInsensitiveContains(searchText)
-            return matchesCategory && matchesSearch
-        }
-    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+                    searchBar
+
                     welcomeHeader
 
                     weeklyPreferencesBanner
-
-                    searchBar
-
-                    categoryFilter
 
                     recipesSection
                 }
@@ -84,6 +28,19 @@ struct HomeView: View {
             .background(Color.algourmandBackground.ignoresSafeArea())
             .navigationTitle("Accueil")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink {
+                        RecipeCatalogView()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "book.fill")
+                            Text("Catalogue")
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(Color.algourmandPrimary)
+                    }
+                }
+
                 ToolbarItem(placement: .topBarTrailing) {
                     profileMenu
                 }
@@ -112,6 +69,9 @@ struct HomeView: View {
             }
             .onChange(of: viewModel.currentUser?.id) {
                 refreshWeeklyPreferences()
+            }
+            .task {
+                await catalogViewModel.loadInitialData()
             }
         }
     }
@@ -332,13 +292,17 @@ struct HomeView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Color.algourmandPrimary)
 
-            TextField("Rechercher une recette...", text: $searchText)
+            TextField("Rechercher une recette...", text: $catalogViewModel.searchQuery)
                 .foregroundStyle(Color.algourmandText)
                 .autocorrectionDisabled()
+                .onChange(of: catalogViewModel.searchQuery) { _, newValue in
+                    catalogViewModel.onSearchQueryChanged(newValue)
+                }
 
-            if !searchText.isEmpty {
+            if !catalogViewModel.searchQuery.isEmpty {
                 Button {
-                    searchText = ""
+                    catalogViewModel.searchQuery = ""
+                    catalogViewModel.onSearchQueryChanged("")
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(Color.algourmandText.opacity(0.5))
@@ -348,33 +312,6 @@ struct HomeView: View {
         .padding(12)
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-
-    // MARK: - Category Filter
-    private var categoryFilter: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                ForEach(categories, id: \.self) { category in
-                    categoryChip(for: category)
-                }
-            }
-        }
-    }
-
-    private func categoryChip(for category: String) -> some View {
-        let isSelected = (selectedCategory == category)
-
-        return Button {
-            selectedCategory = category
-        } label: {
-            Text(category)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(isSelected ? Color.algourmandPrimary : Color(uiColor: .secondarySystemGroupedBackground))
-                .foregroundStyle(isSelected ? Color.white : Color.algourmandText)
-                .clipShape(Capsule())
-        }
-        .font(.subheadline)
     }
 
     // MARK: - Recipes Section
@@ -387,12 +324,25 @@ struct HomeView: View {
 
                 Spacer()
 
-                Text("\(filteredRecipes.count) recette(s)")
-                    .font(.caption)
-                    .foregroundStyle(Color.algourmandText.opacity(0.6))
+                NavigationLink {
+                    RecipeCatalogView()
+                } label: {
+                    Text("Voir tout")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.algourmandPrimary)
+                }
             }
 
-            if filteredRecipes.isEmpty {
+            if catalogViewModel.isLoading && catalogViewModel.recipes.isEmpty {
+                HStack {
+                    Spacer()
+                    ProgressView("Chargement des recettes...")
+                        .tint(Color.algourmandPrimary)
+                    Spacer()
+                }
+                .padding(.vertical, 30)
+            } else if catalogViewModel.recipes.isEmpty {
                 VStack(spacing: 10) {
                     Image(systemName: "fork.knife")
                         .font(.largeTitle)
@@ -404,9 +354,14 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 40)
             } else {
-                LazyVStack(spacing: 12) {
-                    ForEach(filteredRecipes) { recipe in
-                        RecipeCardView(recipe: recipe)
+                LazyVStack(spacing: 14) {
+                    ForEach(catalogViewModel.recipes.prefix(6)) { recipe in
+                        NavigationLink {
+                            RecipeDetailView(recipe: recipe)
+                        } label: {
+                            RecipeCardView(recipe: recipe)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }

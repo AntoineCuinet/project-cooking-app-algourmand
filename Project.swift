@@ -50,10 +50,10 @@ let project = Project(
         // MARK: - AlgourmandCore (Business Logic, Models, API)
         .target(
             name: "\(Constants.appName)Core",
-            destinations: Constants.destinations,
+            destinations: Constants.coreDestinations,
             product: .framework,
             bundleId: "\(Constants.baseBundleId).core",
-            deploymentTargets: Constants.deploymentTarget,
+            deploymentTargets: Constants.coreDeploymentTargets,
             infoPlist: .default,
             sources: ["\(Constants.appName)Core/**"],
             dependencies: [],
@@ -78,16 +78,14 @@ let project = Project(
         // MARK: - AlgourmandTests (Unit Tests)
         .target(
             name: "\(Constants.appName)Tests",
-            destinations: Constants.destinations,
+            destinations: Constants.coreDestinations,
             product: .unitTests,
             bundleId: "\(Constants.baseBundleId).tests",
-            deploymentTargets: Constants.deploymentTarget,
+            deploymentTargets: Constants.coreDeploymentTargets,
             infoPlist: .default,
             sources: ["\(Constants.appName)Tests/**"],
             dependencies: [
-                .target(name: Constants.appName),
-                .target(name: "\(Constants.appName)Core"),
-                .target(name: "\(Constants.appName)CoreUI")
+                .target(name: "\(Constants.appName)Core")
             ],
             settings: .settings(base: Constants.testSettings)
         )
