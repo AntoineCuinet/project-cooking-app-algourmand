@@ -67,5 +67,5 @@ Le workspace `Algourmand.xcworkspace` est généré automatiquement et s'ouvre d
 Appuyez sur `Cmd + U` dans Xcode ou lancez en ligne de commande :
 
 ```bash
-xcodebuild -workspace Algourmand.xcworkspace -scheme AlgourmandTests -destination "generic/platform=iOS Simulator" test
+xcodebuild test -workspace Algourmand.xcworkspace -scheme AlgourmandTests -destination 'platform=macOS'
 ```
