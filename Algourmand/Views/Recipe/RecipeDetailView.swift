@@ -266,6 +266,26 @@ struct RecipeDetailView: View {
 
 #Preview {
     NavigationStack {
-        RecipeDetailView(recipe: MockRecipeService.sampleRecipes[0])
+        RecipeDetailView(
+            recipe: Recipe(
+                name: "Poulet Teriyaki Maison",
+                image: "https://www.themealdb.com/images/media/meals/wvpsxx1468256321.jpg",
+                category: "Chicken",
+                area: "Japonais",
+                ingredients: [
+                    Ingredient(name: "Sauce Soja", quantity: 60, unit: "ml"),
+                    Ingredient(name: "Blancs de poulet", quantity: 2, unit: "filets")
+                ],
+                instructions: [
+                    "Émincer le poulet et le faire dorer à la poêle.",
+                    "Ajouter la sauce teriyaki et laisser caraméliser 10 minutes."
+                ],
+                preparationTime: 25,
+                calories: 450,
+                proteins: 35,
+                carbohydrates: 20,
+                fats: 12
+            )
+        )
     }
 }
