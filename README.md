@@ -1,6 +1,6 @@
 # Algourmand - Application iOS de Recettes
 
-Algourmand est une application iOS native en **SwiftUI** dédiée à la gestion de recettes de cuisine et de repas, s'interfaçant avec une API REST **Laravel** ([dépôt backend](https://github.com/gaspardquentin/algourmand)).
+Algourmand est une application iOS native en **SwiftUI** dédiée à la gestion de recettes de cuisine et de repas, s'interfaçant avec une API REST **Laravel** ([dépôt backend](https://github.com/gaspardquentin/algourmand)) et une API REST publique gratuite de base de données de recettes : [TheMealDB](https://www.themealdb.com/).
 
 ![Logo](screenshot.png)
 
@@ -20,14 +20,7 @@ Le projet est entièrement modulaire et piloté par **Tuist** pour éviter les c
 
 ## Système d'Authentification & API REST
 
-L'application intègre les contrats d'API pour les 4 endpoints d'authentification :
-
-| Méthode | Endpoint | Description | Headers |
-| --- | --- | --- | --- |
-| `POST` | `/api/v1/register` | Inscription d'un nouvel utilisateur (201 ou 422) | `Content-Type: application/json` |
-| `POST` | `/api/v1/login` | Connexion utilisateur (200 ou 401) | `Content-Type: application/json` |
-| `POST` | `/api/v1/logout` | Révocation de session (204 ou 401) | `Authorization: Bearer <token>` |
-| `GET` | `/api/v1/user` | Profil de l'utilisateur connecté (200 ou 401) | `Authorization: Bearer <token>` |
+L'application intègre les contrats d'API pour les endpoints d'authentification :
 
 ### Double mode de fonctionnement
 
