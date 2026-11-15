@@ -18,6 +18,10 @@ struct HomeView: View {
 
                     welcomeHeader
 
+                    if let needs = viewModel.currentNutritionNeeds {
+                        NutritionOverviewCard(needs: needs)
+                    }
+
                     weeklyPreferencesBanner
 
                     recipesSection
@@ -79,6 +83,9 @@ struct HomeView: View {
     private func refreshWeeklyPreferences() {
         if let user = viewModel.currentUser {
             savedWeeklyPreferences = LocalWeeklyPreferencesStorage.shared.loadPreferences(for: user.id)
+            if viewModel.currentProfile == nil {
+                viewModel.currentProfile = LocalProfileStorage.shared.loadProfile(for: user.id)
+            }
         } else {
             savedWeeklyPreferences = nil
         }
