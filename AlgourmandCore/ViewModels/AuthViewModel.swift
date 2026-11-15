@@ -186,6 +186,11 @@ public final class AuthViewModel: ObservableObject {
         successMessage = nil
     }
 
+    public var currentNutritionNeeds: NutritionNeeds? {
+        guard let profile = currentProfile else { return nil }
+        return NutritionCalculator.calculateNeeds(for: profile)
+    }
+
     public func refreshCurrentUser() async {
         guard isAuthenticated else { return }
         isLoading = true
