@@ -5,6 +5,7 @@ import SwiftUI
 struct HomeView: View {
     @ObservedObject var viewModel: AuthViewModel
     @StateObject private var catalogViewModel = RecipeCatalogViewModel()
+    @StateObject private var mealPlanViewModel = MealPlanViewModel()
 
     @State private var showingLogoutConfirmation = false
     @State private var showingWeeklyPreferences = false
@@ -13,7 +14,7 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 22) {
                     searchBar
 
                     welcomeHeader
@@ -24,6 +25,10 @@ struct HomeView: View {
 
                     weeklyPreferencesBanner
 
+                    nextMealSection
+
+                    weeklyPlanningSection
+
                     recipesSection
                 }
                 .padding(.horizontal, 20)
@@ -33,16 +38,7 @@ struct HomeView: View {
             .navigationTitle("Accueil")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    NavigationLink {
-                        RecipeCatalogView()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "book.fill")
-                            Text("Catalogue")
-                        }
-                        .font(.subheadline)
-                        .foregroundStyle(Color.algourmandPrimary)
-                    }
+                    leadingToolbarLinks
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -69,13 +65,29 @@ struct HomeView: View {
                 }
             }
             .onAppear {
-                refreshWeeklyPreferences()
+                handleOnAppear()
             }
             .onChange(of: viewModel.currentUser?.id) {
-                refreshWeeklyPreferences()
+                handleOnAppear()
             }
             .task {
                 await catalogViewModel.loadInitialData()
+            }
+        }
+    }
+
+    private func handleOnAppear() {
+        refreshWeeklyPreferences()
+        if let user = viewModel.currentUser {
+            mealPlanViewModel.loadPlan(for: user.id)
+            if mealPlanViewModel.currentPlan == nil, let profile = viewModel.currentProfile {
+                Task {
+                    await mealPlanViewModel.generatePlan(
+                        for: user.id,
+                        profile: profile,
+                        preferences: savedWeeklyPreferences
+                    )
+                }
             }
         }
     }
@@ -89,6 +101,279 @@ struct HomeView: View {
         } else {
             savedWeeklyPreferences = nil
         }
+    }
+
+    // MARK: - Toolbar Links
+    @ViewBuilder
+    private var leadingToolbarLinks: some View {
+        HStack(spacing: 12) {
+            if let user = viewModel.currentUser, let profile = viewModel.currentProfile {
+                NavigationLink {
+                    MealPlanView(
+                        viewModel: mealPlanViewModel,
+                        user: user,
+                        profile: profile,
+                        preferences: savedWeeklyPreferences,
+                        needs: viewModel.currentNutritionNeeds
+                    )
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "calendar")
+                        Text("Planning")
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.algourmandPrimary)
+                }
+            }
+
+            NavigationLink {
+                RecipeCatalogView()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "book.fill")
+                    Text("Catalogue")
+                }
+                .font(.subheadline)
+                .foregroundStyle(Color.algourmandPrimary)
+            }
+        }
+    }
+
+    // MARK: - Next Upcoming Meal Section
+    @ViewBuilder
+    private var nextMealSection: some View {
+        if let meal = mealPlanViewModel.nextUpcomingMeal, let recipe = meal.recipe {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Label("Prochain repas • \(meal.mealType.displayName)", systemImage: meal.mealType.systemIcon)
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.algourmandPrimary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.algourmandPrimary.opacity(0.12))
+                        .clipShape(Capsule())
+
+                    Spacer()
+
+                    Text(formatMealDate(meal.date))
+                        .font(.caption2)
+                        .foregroundStyle(Color.algourmandText.opacity(0.6))
+                }
+
+                NavigationLink {
+                    RecipeDetailView(recipe: recipe)
+                } label: {
+                    nextMealCardContent(meal: meal, recipe: recipe)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func nextMealCardContent(meal: PlannedMeal, recipe: Recipe) -> some View {
+        HStack(spacing: 14) {
+            if let imageString = recipe.image, let url = URL(string: imageString) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 90, height: 90)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    default:
+                        placeholderNextMealImage
+                    }
+                }
+            } else {
+                placeholderNextMealImage
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(recipe.name)
+                    .font(.headline)
+                    .lineLimit(2)
+                    .foregroundStyle(Color.algourmandText)
+
+                HStack(spacing: 10) {
+                    Label("\(recipe.preparationTime) min", systemImage: "clock")
+                        .font(.caption2)
+                        .foregroundStyle(Color.algourmandText.opacity(0.7))
+
+                    Label("\(Int(recipe.calories)) kcal", systemImage: "flame.fill")
+                        .font(.caption2)
+                        .foregroundStyle(Color.algourmandPrimary)
+
+                    if recipe.proteins > 0 {
+                        Text("• \(Int(recipe.proteins))g prot.")
+                            .font(.caption2)
+                            .foregroundStyle(Color.orange)
+                    }
+                }
+
+                HStack(spacing: 4) {
+                    Image(systemName: "fork.knife")
+                        .font(.caption2)
+                    Text("Cuisiner ce repas")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                }
+                .foregroundStyle(Color.algourmandPrimary)
+                .padding(.top, 2)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.footnote)
+                .foregroundStyle(Color.algourmandText.opacity(0.3))
+        }
+        .padding(14)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+    }
+
+    private var placeholderNextMealImage: some View {
+        RoundedRectangle(cornerRadius: 14)
+            .fill(Color.algourmandPrimary.opacity(0.12))
+            .frame(width: 90, height: 90)
+            .overlay {
+                Image(systemName: "fork.knife")
+                    .foregroundStyle(Color.algourmandPrimary)
+            }
+    }
+
+    private func formatMealDate(_ date: Date) -> String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            return "Aujourd'hui"
+        } else if calendar.isDateInTomorrow(date) {
+            return "Demain"
+        } else {
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "fr_FR")
+            formatter.dateFormat = "EEEE d"
+            return formatter.string(from: date).capitalized
+        }
+    }
+
+    // MARK: - Weekly Planning Section
+    @ViewBuilder
+    private var weeklyPlanningSection: some View {
+        if let user = viewModel.currentUser, let profile = viewModel.currentProfile {
+            if let plan = mealPlanViewModel.currentPlan {
+                NavigationLink {
+                    MealPlanView(
+                        viewModel: mealPlanViewModel,
+                        user: user,
+                        profile: profile,
+                        preferences: savedWeeklyPreferences,
+                        needs: viewModel.currentNutritionNeeds
+                    )
+                } label: {
+                    configuredPlanningBanner(plan: plan)
+                }
+                .buttonStyle(.plain)
+            } else {
+                unconfiguredPlanningBanner(user: user, profile: profile)
+            }
+        }
+    }
+
+    private func configuredPlanningBanner(plan: WeeklyPlan) -> some View {
+        HStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(Color.algourmandPrimary.opacity(0.14))
+                    .frame(width: 44, height: 44)
+
+                Image(systemName: "calendar.badge.clock")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(Color.algourmandPrimary)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text("Planning de la semaine")
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.algourmandText)
+
+                    Text("\(plan.meals.count) repas")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.algourmandPrimary.opacity(0.12))
+                        .foregroundStyle(Color.algourmandPrimary)
+                        .clipShape(Capsule())
+                }
+
+                Text("Déjeuners et dîners calibrés selon vos besoins.")
+                    .font(.caption)
+                    .foregroundStyle(Color.algourmandText.opacity(0.7))
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.footnote)
+                .fontWeight(.bold)
+                .foregroundStyle(Color.algourmandText.opacity(0.4))
+        }
+        .padding(14)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
+    }
+
+    private func unconfiguredPlanningBanner(user: UserDTO, profile: UserProfile) -> some View {
+        Button {
+            Task {
+                await mealPlanViewModel.generatePlan(
+                    for: user.id,
+                    profile: profile,
+                    preferences: savedWeeklyPreferences
+                )
+            }
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(Color.orange.opacity(0.14))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.orange)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Générer mon planning")
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.algourmandText)
+
+                    Text("Créez vos 14 repas de la semaine en 1 clic.")
+                        .font(.caption)
+                        .foregroundStyle(Color.algourmandText.opacity(0.7))
+                }
+
+                Spacer()
+
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(Color.algourmandPrimary)
+            }
+            .padding(14)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Weekly Preferences Banner

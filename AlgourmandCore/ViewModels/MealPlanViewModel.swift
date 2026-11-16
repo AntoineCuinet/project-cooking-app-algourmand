@@ -27,7 +27,39 @@ public final class MealPlanViewModel: ObservableObject {
 
     // MARK: - Plan Lifecycle
     public func loadPlan(for userId: UUID) {
-        currentPlan = storage.loadPlan(for: userId)
+        if var plan = storage.loadPlan(for: userId) {
+            let resolvedMeals = plan.meals.map { meal -> PlannedMeal in
+                if meal.recipe == nil {
+                    let fallback = SampleRecipes.all.first { $0.id == meal.recipeId }
+                    return PlannedMeal(
+                        id: meal.id,
+                        date: meal.date,
+                        mealType: meal.mealType,
+                        recipeId: meal.recipeId,
+                        isLocked: meal.isLocked,
+                        recipe: fallback
+                    )
+                }
+                return meal
+            }
+            plan = WeeklyPlan(
+                id: plan.id,
+                weekStartDate: plan.weekStartDate,
+                meals: resolvedMeals,
+                totalBudget: plan.totalBudget
+            )
+            currentPlan = plan
+            let calendar = Calendar.current
+            let today = Date()
+            let days = daysOfWeek
+            if days.contains(where: { calendar.isDate($0, inSameDayAs: today) }) {
+                selectedDate = today
+            } else if let first = days.first {
+                selectedDate = first
+            }
+        } else {
+            currentPlan = nil
+        }
     }
 
     public func generatePlan(
