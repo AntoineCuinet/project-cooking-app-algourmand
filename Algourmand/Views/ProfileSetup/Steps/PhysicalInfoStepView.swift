@@ -19,6 +19,8 @@ struct PhysicalInfoStepView: View {
                 .font(.headline)
                 .foregroundStyle(Color.algourmandText)
 
+            genderSection
+
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text("Âge")
@@ -126,6 +128,57 @@ struct PhysicalInfoStepView: View {
                     lineWidth: 1
                 )
         )
+    }
+
+    // MARK: - Gender Section
+    private var genderSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Sexe biologique")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(Color.algourmandText.opacity(0.8))
+
+            HStack(spacing: 8) {
+                ForEach(UserProfile.Gender.allCases, id: \.self) { gender in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            viewModel.gender = gender
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: gender.systemIcon)
+                                .font(.subheadline)
+                            Text(gender.displayName)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(
+                            viewModel.gender == gender
+                                ? Color.algourmandPrimary.opacity(0.15)
+                                : Color(uiColor: .tertiarySystemGroupedBackground)
+                        )
+                        .foregroundStyle(
+                            viewModel.gender == gender
+                                ? Color.algourmandPrimary
+                                : Color.algourmandText
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(
+                                    viewModel.gender == gender
+                                        ? Color.algourmandPrimary
+                                        : Color.clear,
+                                    lineWidth: 1.5
+                                )
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 
     // MARK: - Activity Level Section

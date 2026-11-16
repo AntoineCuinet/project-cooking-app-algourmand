@@ -55,6 +55,22 @@ public final class LocalProfileStorage: @unchecked Sendable {
             return profile
         }
 
+        if userId == UUID(uuidString: "77777777-7777-7777-7777-777777777777") {
+            let defaultProfile = UserProfile(
+                id: userId,
+                gender: .male,
+                age: 28,
+                weight: 74.0,
+                height: 180.0,
+                activityLevel: .active,
+                goal: .muscleGain,
+                allergies: [],
+                dietaryPreferences: ["omnivore"],
+                dislikedIngredients: ["Coriandre"]
+            )
+            return defaultProfile
+        }
+
         return nil
     }
 

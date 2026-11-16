@@ -1,6 +1,34 @@
 import Foundation
 
 public struct UserProfile: Identifiable, Codable, Hashable, Sendable {
+    public enum Gender: String, Codable, CaseIterable, Sendable {
+        case male
+        case female
+        case other
+
+        public var displayName: String {
+            switch self {
+            case .male:
+                return "Homme"
+            case .female:
+                return "Femme"
+            case .other:
+                return "Autre"
+            }
+        }
+
+        public var systemIcon: String {
+            switch self {
+            case .male:
+                return "figure.stand"
+            case .female:
+                return "figure.stand.dress"
+            case .other:
+                return "person.fill"
+            }
+        }
+    }
+
     public enum ActivityLevel: String, Codable, CaseIterable, Sendable {
         case sedentary = "sedentary"
         case moderate = "moderate"
@@ -87,6 +115,7 @@ public struct UserProfile: Identifiable, Codable, Hashable, Sendable {
     }
 
     public let id: UUID
+    public let gender: Gender?
     public let age: Int
     public let weight: Double?
     public let height: Double?
@@ -96,8 +125,20 @@ public struct UserProfile: Identifiable, Codable, Hashable, Sendable {
     public let dietaryPreferences: [String]
     public let dislikedIngredients: [String]
 
-    public init(id: UUID = UUID(), age: Int, weight: Double? = nil, height: Double? = nil, activityLevel: ActivityLevel, goal: NutritionGoal, allergies: [String] = [], dietaryPreferences: [String] = [], dislikedIngredients: [String] = []) {
+    public init(
+        id: UUID = UUID(),
+        gender: Gender? = nil,
+        age: Int,
+        weight: Double? = nil,
+        height: Double? = nil,
+        activityLevel: ActivityLevel,
+        goal: NutritionGoal,
+        allergies: [String] = [],
+        dietaryPreferences: [String] = [],
+        dislikedIngredients: [String] = []
+    ) {
         self.id = id
+        self.gender = gender
         self.age = age
         self.weight = weight
         self.height = height
@@ -110,6 +151,7 @@ public struct UserProfile: Identifiable, Codable, Hashable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case id
+        case gender
         case age
         case weight
         case height

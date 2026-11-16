@@ -63,6 +63,7 @@ public final class ProfileSetupViewModel: ObservableObject {
     @Published public var isCompleted: Bool = false
 
     // MARK: - Form Data
+    @Published public var gender: UserProfile.Gender?
     @Published public var ageText: String = ""
     @Published public var weightText: String = ""
     @Published public var heightText: String = ""
@@ -303,6 +304,7 @@ public final class ProfileSetupViewModel: ObservableObject {
     public func buildUserProfile(id: UUID = UUID()) -> UserProfile {
         UserProfile(
             id: id,
+            gender: gender,
             age: ageValue ?? 25,
             weight: weightValue,
             height: heightValue,
@@ -312,5 +314,9 @@ public final class ProfileSetupViewModel: ObservableObject {
             dietaryPreferences: Array(selectedDietaryPreferences),
             dislikedIngredients: dislikedIngredients
         )
+    }
+
+    public var calculatedNutritionNeeds: NutritionNeeds {
+        NutritionCalculator.calculateNeeds(for: buildUserProfile())
     }
 }
