@@ -4,13 +4,11 @@ on:
   push:
     branches:
       - main
-      - develop
       - 'feat/**'
       - 'fix/**'
   pull_request:
     branches:
       - main
-      - develop
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -31,19 +29,10 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Install SwiftLint
+      - name: Install Tools
         run: |
-          if ! command -v swiftlint &> /dev/null; then
-            brew install swiftlint
-          fi
+          brew install swiftlint tuist
           echo "/opt/homebrew/bin" >> $GITHUB_PATH
-
-      - name: Install Tuist
-        run: |
-          curl -fsSL https://get.tuist.io | bash
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
-          echo "$HOME/.tuist/bin" >> $GITHUB_PATH
 
       - name: Verify Tools
         run: |
@@ -59,7 +48,7 @@ jobs:
         run: |
           tuist generate --no-open
 
-      - name: Run Unit Tests (macOS Native Runner)
+      - name: Run Unit Tests
         run: |
           xcodebuild test \
             -workspace Algourmand.xcworkspace \
@@ -67,7 +56,7 @@ jobs:
             -destination 'platform=macOS' \
             -resultBundlePath TestResults.xcresult
 
-      - name: Build iOS Target (Compilation Check)
+      - name: Build iOS Target
         run: |
           xcodebuild build \
             -workspace Algourmand.xcworkspace \

@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*.*'
   workflow_dispatch:
 
 concurrency:
@@ -29,19 +29,10 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Install SwiftLint
+      - name: Install Tools
         run: |
-          if ! command -v swiftlint &> /dev/null; then
-            brew install swiftlint
-          fi
+          brew install swiftlint tuist
           echo "/opt/homebrew/bin" >> $GITHUB_PATH
-
-      - name: Install Tuist
-        run: |
-          curl -fsSL https://get.tuist.io | bash
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
-          echo "$HOME/.tuist/bin" >> $GITHUB_PATH
 
       - name: Verify Tools
         run: |
