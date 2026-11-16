@@ -48,6 +48,33 @@ final class StorageTests: XCTestCase {
         XCTAssertNil(KeychainHelper.readToken())
     }
 
+    func testLocalWeeklyPlanStorage() {
+        let userId = UUID()
+        let storage = LocalWeeklyPlanStorage.shared
+
+        let meal = PlannedMeal(
+            date: Date(),
+            mealType: .lunch,
+            recipeId: UUID(),
+            isLocked: true
+        )
+        let plan = WeeklyPlan(
+            weekStartDate: Date(),
+            meals: [meal],
+            totalBudget: 75.0
+        )
+
+        XCTAssertTrue(storage.savePlan(plan, for: userId))
+
+        let loaded = storage.loadPlan(for: userId)
+        XCTAssertNotNil(loaded)
+        XCTAssertEqual(loaded?.meals.count, 1)
+        XCTAssertEqual(loaded?.totalBudget, 75.0)
+
+        XCTAssertTrue(storage.deletePlan(for: userId))
+        XCTAssertNil(storage.loadPlan(for: userId))
+    }
+
     func testModelsCreationAndEncoding() throws {
         let profile = UserProfile(
             age: 28,
