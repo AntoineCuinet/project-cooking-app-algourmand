@@ -13,7 +13,7 @@ concurrency:
 jobs:
   validate-and-release:
     name: Validate and Create GitHub Release
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 20
     permissions:
       contents: write
