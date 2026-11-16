@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+      - 'fix/**'
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-test:
+    name: Lint, Test & Build
+    runs-on: macos-15
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install Tools
+        run: |
+          brew install swiftlint tuist
+          echo "/opt/homebrew/bin" >> $GITHUB_PATH
+
+      - name: Verify Tools
+        run: |
+          xcodebuild -version
+          swiftlint version
+          tuist version
+
+      - name: Run SwiftLint
+        run: |
+          swiftlint lint --strict
+
+      - name: Generate Xcode Project
+        run: |
+          tuist generate --no-open
+
+      - name: Run Unit Tests
+        run: |
+          rm -rf TestResults.xcresult
+          xcodebuild test \
+            -workspace Algourmand.xcworkspace \
+            -scheme AlgourmandTests \
+            -destination 'platform=macOS,arch=arm64' \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Build iOS Target
+        run: |
+          xcodebuild build \
+            -workspace Algourmand.xcworkspace \
+            -scheme Algourmand \
+            -destination 'generic/platform=iOS' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
