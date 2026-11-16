@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - main
+      - develop
       - 'feat/**'
       - 'fix/**'
   pull_request:
     branches:
       - main
+      - develop
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,12 +24,19 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
+
+      - name: Install SwiftLint
+        run: |
+          if ! command -v swiftlint &> /dev/null; then
+            brew install swiftlint
+          fi
+          echo "/opt/homebrew/bin" >> $GITHUB_PATH
 
       - name: Install Tuist
         run: |
@@ -39,7 +48,7 @@ jobs:
       - name: Verify Tools
         run: |
           xcodebuild -version
-          swiftlint --version
+          swiftlint version
           tuist version
 
       - name: Run SwiftLint
@@ -50,7 +59,7 @@ jobs:
         run: |
           tuist generate --no-open
 
-      - name: Run Unit Tests
+      - name: Run Unit Tests (macOS Native Runner)
         run: |
           xcodebuild test \
             -workspace Algourmand.xcworkspace \
@@ -58,7 +67,7 @@ jobs:
             -destination 'platform=macOS' \
             -resultBundlePath TestResults.xcresult
 
-      - name: Build iOS Target
+      - name: Build iOS Target (Compilation Check)
         run: |
           xcodebuild build \
             -workspace Algourmand.xcworkspace \
